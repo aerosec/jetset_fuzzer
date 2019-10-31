@@ -75,27 +75,27 @@ do
     esac
 done
 
-if [ ! -z $REBUILD_QEMU ]; then
+if [ $REBUILD_QEMU -ne 0 ]; then
     echo "RECOMPILING QEMU"
     cd ..
     touch accel/tcg/cpu-exec.c
     make clean
     cd criu
-    make -j30
+    make -j30 || exit 1
     cd ..
     if [ $ADDIT_CFLAGS != "" ]; then
-        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $ADDIT_CFLAGS" -j30
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $ADDIT_CFLAGS" -j30 || exit 1
     else
-        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30 || exit 1
     fi
     sleep 1
     cd afl
     cp ../$QEMU_BIN_PATH afl-qemu
 fi
 
-if [ ! -z REBUILD_AFL ]; then
+if [ $REBUILD_AFL -ne 0 ]; then
     echo "RECOMPILING AFL"
-    make
+    make || exit 1
 fi
 
 if [ $QEMU_TRACE_SCR != '' ]; then
@@ -106,7 +106,7 @@ fi
 cp ../../angr/data/cmu/* ./data/cmu/
 rm -rf syncdir/$FUZZ_NAME
 echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
-mkdir syncdir/
+mkdir syncdir/ > /dev/null 2>&1
 mkdir syncdir/$FUZZ_NAME
 ./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
 sleep 0.2
