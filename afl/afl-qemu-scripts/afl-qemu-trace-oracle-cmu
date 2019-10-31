@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+exec ./afl-qemu -display none -M cmu900 -serial file:./syncdir/$1/stdout  -display none -drive if=pflash,format=raw,index=0,file=./data/cmu/boot.bin -drive if=pflash,format=raw,index=1,file=./data/cmu/app.bin -drive if=pflash,format=raw,index=2,file=./data/cmu/data.bin -device scripted-io,iobase=0x5000,iosize=1,const=0x80 -device scripted-io,iobase=0x6000,iosize=1,const=0xFB -afl-entry 0x1033734 -afl-start 0x0 -afl-end -1 -afl-criu-dir ./syncdir/$1/criu/ -afl-fuzzer-name $1 -afl-state-files ./data/cmu/data.bin,./data/cmu/boot.bin,./data/cmu/app.bin
+

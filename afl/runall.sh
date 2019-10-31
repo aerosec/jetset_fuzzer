@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# Script for running AFL fuzzer with full system qemu.
+
+FUZZ_NAME='f0'
+FUZZ_TYPE='M'
+ADDIT_CFLAGS=''
+QEMU_TRACE_SCR=''
+CPU_PIN=''
+REBUILD_QEMU=0
+REBUILD_AFL=0
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+    key="$1"
+
+    case $key in
+        # Name of fuzzer instance, also designates where to store all
+        # files for the purposes of recording output, etc..
+        -n|--fuzzer-name)
+            FUZZ_NAME="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        # Whether this is a master or secondary fuzzer, for parallelizing
+        # when running under docker
+        -t|--fuzzer-type)
+            FUZZ_TYPE="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        # Additional cflags to pass during compilation of qemu, if
+        # that option is also specified
+        -c|--additional-cflags)
+            ADDIT_CFLAGS="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        # The script to use for running qemu; should be set up to the
+        # device you want to emulate
+        -s|--qemu-trace-script)
+            QEMU_TRACE_SCR="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        # The cpu to pin AFL to; used by docer since the /proc of
+        # each container is unaware of the others
+        -p|--pin-cpu)
+            CPU_PIN="$2"
+            shift # past argument
+            shift # past value
+            ;;
+        # Whether to recompile qemu and copy it into the current directory
+        -q|--rebuild-qemu)
+            REBUILD_QEMU=1
+            shift # past argument
+            ;;
+        # Whether to recompile AFL in the current directory
+        -a|--rebuild-afl)
+            REBUILD_AFL=1
+            shift # past argument
+            ;;
+        --default)
+            DEFAULT=YES
+            shift # past argument
+            ;;
+        *)    # unknown option
+            POSITIONAL+=("$1") # save it in an array for later
+            shift # past argument
+            ;;
+    esac
+done
+
+if [ ! -z $REBUILD_QEMU ]; then
+    echo "RECOMPILING QEMU"
+    cd ..
+    touch accel/tcg/cpu-exec.c
+    make clean
+    cd criu
+    make -j30
+    cd ..
+    if [ $ADDIT_CFLAGS != "" ]; then
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $4" -j30
+    else
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30
+    fi
+    sleep 1
+    cd afl
+    cp ../i386-softmmu/qemu-system-i386 afl-qemu
+fi
+
+if [ ! -z REBUILD_AFL ]; then
+    echo "RECOMPILING AFL"
+    make
+fi
+
+if [ $QEMU_TRACE_SCR != '' ]; then
+    echo "COPYING TRACE"
+    cp $5 afl-qemu-trace
+fi
+
+cp ../../angr/data/cmu/* ./data/cmu/
+rm -rf syncdir/$FUZZ_NAME
+echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
+mkdir syncdir/
+mkdir syncdir/$FUZZ_NAME
+./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
+sleep 0.2
+./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
