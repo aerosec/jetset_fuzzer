@@ -51,10 +51,13 @@ do
             shift # past argument
             shift # past value
             ;;
-        # Whether to recompile qemu and copy it into the current directory
+        # Whether to recompile qemu and the qemu binary path to copy into the
+        # current directory
         -q|--rebuild-qemu)
             REBUILD_QEMU=1
+            QEMU_BIN_PATH="$2"
             shift # past argument
+            shift # past value
             ;;
         # Whether to recompile AFL in the current directory
         -a|--rebuild-afl)
@@ -81,13 +84,13 @@ if [ ! -z $REBUILD_QEMU ]; then
     make -j30
     cd ..
     if [ $ADDIT_CFLAGS != "" ]; then
-        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $4" -j30
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $ADDIT_CFLAGS" -j30
     else
         make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30
     fi
     sleep 1
     cd afl
-    cp ../i386-softmmu/qemu-system-i386 afl-qemu
+    cp ../$QEMU_BIN_PATH afl-qemu
 fi
 
 if [ ! -z REBUILD_AFL ]; then
@@ -97,7 +100,7 @@ fi
 
 if [ $QEMU_TRACE_SCR != '' ]; then
     echo "COPYING TRACE"
-    cp $5 afl-qemu-trace
+    cp $QEMU_TRACE_SCR afl-qemu-trace
 fi
 
 cp ../../angr/data/cmu/* ./data/cmu/

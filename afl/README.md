@@ -20,13 +20,13 @@ After this runs successfully, ^C to kill it; the environment for the docker
 container is set up and the neccessary files are compiled.
 
 ```
-sudo ./runall.sh -q -a -c "-DSYNTH_ENABLED=1" -s "afl-qemu-scripts/afl-qemu-trace-synth-cmu"
+sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -a -c "-DSYNTH_ENABLED=1" -s "afl-qemu-scripts/afl-qemu-trace-synth-cmu"
 ```
 
 or
 
 ```
-sudo ./runall.sh -q -a -s "afl-qemu-scripts/afl-qemu-trace-oracle-cmu"
+sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -a -s "afl-qemu-scripts/afl-qemu-trace-oracle-cmu"
 ```
 
 Now, cd into the directory above this one, and use the Dockerfile to set up the container:
