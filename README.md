@@ -4,8 +4,12 @@ Repository for setting up an architecture independent fuzzer based on AFL in an 
 
 ## Setup
 
+Copy this repo into the base of your QEmu instance, then
+
 ```
-patch -p1 <../patches/cpu-exec.diff
+for f in ./patches/*; do
+    patch -p1 < $f
+done
 ```
 
 Then, find the PC you want to checkpoint (so that each fuzz case begins at that PC and that program state), 

@@ -1,0 +1,37 @@
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -4412,3 +4412,34 @@ HXCOMM This is the last statement. Insert new options before this line!
+ STEXI
+ @end table
+ ETEXI
++
++DEF("afl-entry", HAS_ARG, QEMU_OPTION_afl_entry, \
++    "-afl-entry specifies the address to spawn AFL forkserver at\n", QEMU_ARCH_ALL)
++
++DEF("afl-start", HAS_ARG, QEMU_OPTION_afl_start, \
++    "-afl-start specifies the address to start AFL fuzzing at\n", QEMU_ARCH_ALL)
++
++DEF("afl-end", HAS_ARG, QEMU_OPTION_afl_end, \
++    "-afl-end specifies the address to end AFL fuzzing at\n", QEMU_ARCH_ALL)
++
++DEF("afl-criu-dir", HAS_ARG, QEMU_OPTION_afl_criu_dir, \
++    "-afl-criu-dir specifies the directory in which to store checkpointed criu dumps for AFL fuzzing\n", QEMU_ARCH_ALL)
++
++DEF("afl-fuzzer-name", HAS_ARG, QEMU_OPTION_afl_fuzzer_name, "-afl-fuzzer-name specifies the AFL fuzzer id for storing data\n", \
++    QEMU_ARCH_ALL)
++
++DEF("afl-state-files", HAS_ARG, QEMU_OPTION_afl_state_fns, \
++    "-afl-state-files a comma-seperated list of files to restore on each fuzzer run\n", QEMU_ARCH_ALL)
++
++
++
++
++
++
++
++
++
++
++
++
++

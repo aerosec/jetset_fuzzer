@@ -1,0 +1,39 @@
+--- ./vl.c
++++ ./vl.c
+@@ -192,6 +192,10 @@ bool boot_strict;
+ uint8_t *boot_splash_filedata;
+ size_t boot_splash_filedata_size;
+ uint8_t qemu_extra_params_fw[2];
++extern ulong afl_entry_point, afl_start_code, afl_end_code;
++extern char * afl_criu_dir;
++extern char * afl_fuzzer_name;
++extern char * afl_criu_state_fns;
+ 
+ int icount_align_option;
+ 
+@@ -3987,6 +3990,25 @@ int main(int argc, char **argv, char **envp)
+             case QEMU_OPTION_nouserconfig:
+                 /* Nothing to be parsed here. Especially, do not error out below. */
+                 break;
++            case QEMU_OPTION_afl_entry:
++                afl_entry_point = strtoul(optarg, (char**)0, 0);
++                fprintf(stderr, "AFL ENTRY SET %lx", afl_entry_point);
++                break;
++            case QEMU_OPTION_afl_start:
++                afl_start_code = strtoul(optarg, (char**)0, 0);
++                break;
++            case QEMU_OPTION_afl_end:
++                afl_end_code = strtoul(optarg, (char**)0, 0);
++                break;
++            case QEMU_OPTION_afl_criu_dir:
++                afl_criu_dir = optarg;
++                break;
++            case QEMU_OPTION_afl_fuzzer_name:
++                afl_fuzzer_name = optarg;
++                break;
++            case QEMU_OPTION_afl_state_fns:
++                afl_criu_state_fns = optarg;
++                break;
+             default:
+                 if (os_parse_cmd_args(popt->index, optarg)) {
+                     error_report("Option not supported in this build");
