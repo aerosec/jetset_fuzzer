@@ -304,13 +304,19 @@ static int criu_fork(void) {
     }
 
     if (i_am_forkserver) {
+      FILE * f;
+      char tmp[1024];
+
+      sprintf(tmp, "./syncdir/%s/criu/restore.log", afl_fuzzer_name);
+      f=fopen(tmp,"w");
+      fclose(f);
       criu_set_log_file("restore.log");
 
-      char tmp[1024];
       sprintf(tmp, "./syncdir/%s/stderr", afl_fuzzer_name);
-      FILE *f = fopen(tmp, "a+");
+      f = fopen(tmp, "a+");
       fprintf(f, "%ld\n", fuzzed_cnt);
       fclose(f);
+
       sprintf(tmp, "./syncdir/%s/stdout", afl_fuzzer_name);
       f = fopen(tmp, "a+");
       fprintf(f, "\n=== FUZZ CASE %ld ===\n", fuzzed_cnt++);

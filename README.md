@@ -28,3 +28,19 @@ the next byte of fuzzer input, and this can be written to the device's registers
 I/O, or whatever you want to fuzz.
 
 Once this is set up, read the readme under `/afl` to start the fuzzing. 
+
+## Optional Patches 
+
+There is also an optional patch to the `-serial` flag for QEmu that makes output append-only. This can 
+be applied via the `./opt_patches` directory; if it isn't added, serial device output cannot be logged
+to `./afl/syncdir/{fuzzer name}/stdout`, which is useful for determining how fuzzing is changing the 
+serial output of the device. Similar changes may be neccessary if you are reliant on other file-base
+output, since each CRIU restore of a fuzz instance will reset file pointer state to what it was 
+at the time of a checkpoint.
+
+## Possible Points of Failure
+
+The possible issues are mainly in CRIU checkpointing, i.e. you do not properly reset file state, or are 
+reliant on some transient shared memory file mapping. The first point of debugging may therefore be
+`/afl/syncdir/{fuzzer name}/criu/restore.log` to see if there were any issues in checkpointing the
+process.

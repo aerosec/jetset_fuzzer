@@ -1,0 +1,11 @@
+--- ./chardev/char-file.c
++++ ./chardev/char-file.c
+@@ -70,7 +70,7 @@ static void qmp_chardev_open_file(Chardev *chr,
+ #else
+     int flags, in = -1, out;
+ 
+-    flags = O_WRONLY | O_CREAT | O_BINARY;
++    flags = O_APPEND | O_WRONLY | O_CREAT | O_BINARY;
+     if (file->has_append && file->append) {
+         flags |= O_APPEND;
+     } else {
