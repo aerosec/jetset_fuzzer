@@ -14,7 +14,11 @@ done
 
 Then, find the PC you want to checkpoint (so that each fuzz case begins at that PC and that program state).
 This can be done by changing `AFL_QEMU_CPU_SNIPPET` of `accel/tcg/afl-qemu-cpu-inl.h` to print `itb->pc`.
-Specify the PC to the command line to your qemu script, as in `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`, 
+It can also be done by modifying the code elsewhere in qemu to execute the setup code under the first
+if conditional of `AFL_QEMU_CPU_SNIPPET`, e.g., have the fuzzing checkpoint once a certain sequence of 
+I/O operations occurs.
+If you choose the former option, specify the PC to the command line to your qemu script, as in 
+`/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`, otherwise choose -1 and modify `AFL_QEMU_CPU_SNIPPET`.
 
 `-afl-start` and `-afl-end` should generally be kept at 0 and -1.  
 `-afl-criu-dir ./syncdir/$1/criu/ -afl-fuzzer-name $1` should also stay the same, and must be included. 
@@ -33,7 +37,7 @@ I/O, or whatever you want to fuzz.
 By default, all of the above will make qemu non-runnable without also having an instance of afl.
 To regulate this, recompile with the VALIDATING_AFL flag; this will disable all the afl-specific
 instrumentation, though it will still include the now nop-homomorphic `AFL_QEMU_CPU_SNIPPET` in 
-the code (for purposes of madifying it to print out `itb->pc`.
+the code (for purposes of making it to print out `itb->pc`).
 
 The command to compile is now 
 
