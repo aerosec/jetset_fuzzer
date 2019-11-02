@@ -12,8 +12,9 @@ for f in ./patches/*; do
 done
 ```
 
-Then, find the PC you want to checkpoint (so that each fuzz case begins at that PC and that program state), 
-and specify it to the command line to your qemu script, as in `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`, 
+Then, find the PC you want to checkpoint (so that each fuzz case begins at that PC and that program state).
+This can be done by changing `AFL_QEMU_CPU_SNIPPET` of `accel/tcg/afl-qemu-cpu-inl.h` to print `itb->pc`.
+Specify the PC to the command line to your qemu script, as in `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`, 
 
 `-afl-start` and `-afl-end` should generally be kept at 0 and -1.  
 `-afl-criu-dir ./syncdir/$1/criu/ -afl-fuzzer-name $1` should also stay the same, and must be included. 
@@ -26,6 +27,22 @@ fuzz (e.g. syscall handling), and make a call to fuzz_read with some default val
 (this will be returned if there is no more fuzzed input to read, so 0 is a good bet). fuzz_read will return 
 the next byte of fuzzer input, and this can be written to the device's registers, memory, returned from 
 I/O, or whatever you want to fuzz.
+
+## Compiling for validation
+
+By default, all of the above will make qemu non-runnable without also having an instance of afl.
+To regulate this, recompile with the VALIDATING_AFL flag; this will disable all the afl-specific
+instrumentation, though it will still include the now nop-homomorphic `AFL_QEMU_CPU_SNIPPET` in 
+the code (for purposes of madifying it to print out `itb->pc`.
+
+The command to compile is now 
+
+```
+make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o \
+    -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c -Wno-error -DVALIDATING_AFL=1" -j30
+```
+
+## Compiling for fuzzing
 
 Once this is set up, read the readme under `/afl` to start the fuzzing. 
 

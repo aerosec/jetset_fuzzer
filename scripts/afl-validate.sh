@@ -7,7 +7,7 @@ make -j30
 cd ..
 touch accel/tcg/cpu-exec.c
 make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o \
-    -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c -DVALIDATING_AFL=1" -j30
+    -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c -Wno-error -DVALIDATING_AFL=1" -j30
 
 i=0
 out_dir=$4
