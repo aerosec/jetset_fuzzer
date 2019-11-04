@@ -75,7 +75,7 @@ do
     esac
 done
 
-if [ $REBUILD_QEMU -ne 0 ]; then
+if [ "$REBUILD_QEMU" -ne 0 ]; then
     echo "RECOMPILING QEMU"
     cd ..
     touch accel/tcg/cpu-exec.c
@@ -83,7 +83,7 @@ if [ $REBUILD_QEMU -ne 0 ]; then
     cd criu
     make -j30 || exit 1
     cd ..
-    if [ $ADDIT_CFLAGS != "" ]; then
+    if [ "$ADDIT_CFLAGS" != "" ]; then
         make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $ADDIT_CFLAGS" -j30 || exit 1
     else
         make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30 || exit 1
@@ -93,12 +93,12 @@ if [ $REBUILD_QEMU -ne 0 ]; then
     cp ../$QEMU_BIN_PATH afl-qemu
 fi
 
-if [ $REBUILD_AFL -ne 0 ]; then
+if [ "$REBUILD_AFL" -ne 0 ]; then
     echo "RECOMPILING AFL"
     make || exit 1
 fi
 
-if [ $QEMU_TRACE_SCR != '' ]; then
+if [ "$QEMU_TRACE_SCR" != '' ]; then
     echo "COPYING TRACE"
     cp $QEMU_TRACE_SCR afl-qemu-trace
 fi
