@@ -60,7 +60,7 @@ void kill_children(void);
 void afl_setup(void);
 void afl_forkserver(CPUState * cpu);
 void afl_maybe_log(ulong cur_loc);
-inline void afl_setup_snippet(CPUState * cpu);
+void afl_setup_snippet(CPUState * cpu);
 
 /* Data structure passed around by the translate handlers: */
 struct afl_tsl {
