@@ -14,7 +14,7 @@ extern char *afl_fuzzer_name;
 static int output_redirected = 0;
 static int wrote_to_parent = 0;
 
-static uint64_t fuzzed_read(uint64_t dflt) {
+static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
   if (afl_setup_done) {
     if (!wrote_to_parent) {
       char tmp[1024] = {0};
@@ -50,7 +50,7 @@ static uint64_t fuzzed_read(uint64_t dflt) {
     }
 #endif
     uint64_t res = dflt;
-    int cnt = fread(&res, 1, sizeof(uint64_t), stdin);
+    int cnt = fread(&res, 1, sz, stdin);
     if (cnt == sizeof(uint64_t)) {
       return res;
     }
