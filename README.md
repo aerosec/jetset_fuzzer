@@ -12,25 +12,34 @@ for f in ./patches/*; do
 done
 ```
 
-Then, find the PC you want to checkpoint (so that each fuzz case begins at that PC and that program state).
-This can be done by changing `AFL_QEMU_CPU_SNIPPET` of `accel/tcg/afl-qemu-cpu-inl.h` to print `itb->pc`.
-It can also be done by modifying the code elsewhere in qemu to execute the setup code under the first
-if conditional of `AFL_QEMU_CPU_SNIPPET`, e.g., have the fuzzing checkpoint once a certain sequence of 
-I/O operations occurs.
-If you choose the former option, specify the PC to the command line to your qemu script, as in 
-`/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`, otherwise choose -1 and modify `AFL_QEMU_CPU_SNIPPET`.
+### Choosing an entry point for fuzzing
 
-`-afl-start` and `-afl-end` should generally be kept at 0 and -1.  
+`accel/tcg/afl-qemu-cpu-inl.h` defines a function called `afl_setup_snippet(CPUState * cpu)` that initializes
+a checkpoint, which AFL will restore to as it feeds in different fuzz inputs to the program. You should 
+put this function call somewhere in your code where you want to restore to, e.g. modifying 
+`./target/arm/helper.c` to call this function whenever a specific interrupt, like a syscall, occurs.
+
+Another good option is to add it to the `afl_maybe_log()` function call in that same file by changing 
+the signature of that function to also take in a `CPUState *`, and then passing in `cpu` as an argument
+to the function call to `afl_maybe_log` under `./accel/tcg/cpu-exec.c`. By doing this, you can set the 
+checkpoint to occur when a particular PC is reached in the program.
+If you choose this option, specify the PC to the command line to your qemu script, as in 
+`/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`; this will be saved in an extern variable named
+`afl_entry_point` that you may then use in your own code to check for the proper place to call 
+`afl_setup_snippet`.
+
+`-afl-start` and `-afl-end` should generally be kept at 0 and -1 unless you know what you are doing.
 `-afl-criu-dir ./syncdir/$1/criu/ -afl-fuzzer-name $1` should also stay the same, and must be included. 
 
 `-afl-state-files` is an optional command line option, which is a comma-delimited list of any files 
 that need to be reset after each run of the fuzzer.
 
-Next, include /hw/misc/fuzz_read.h in any QEmu file with some functionality of the device you want to 
-fuzz (e.g. syscall handling), and make a call to fuzz_read with some default value as the argument 
-(this will be returned if there is no more fuzzed input to read, so 0 is a good bet). fuzz_read will return 
-the next byte of fuzzer input, and this can be written to the device's registers, memory, returned from 
-I/O, or whatever you want to fuzz.
+### Feeding fuzzer input to the program
+
+Under `./hw/misc/fuzz_read.h` there is a function called `fuzzeed_read(default value, size in bytes)`,
+which reads from AFLs fuzzer input (or stdin), up to 8 bytes at a time, and returns them in a 
+`uint_64`. You can make a call to this function at any point in the qemu emulator, e.g., when some 
+device I/O occurs, to feed fuzzer input into register state, memory, etc..
 
 ## Compiling for validation
 

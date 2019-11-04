@@ -103,7 +103,6 @@ if [ $QEMU_TRACE_SCR != '' ]; then
     cp $QEMU_TRACE_SCR afl-qemu-trace
 fi
 
-cp ../../angr/data/cmu/* ./data/cmu/
 rm -rf syncdir/$FUZZ_NAME
 echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
 mkdir syncdir/ > /dev/null 2>&1

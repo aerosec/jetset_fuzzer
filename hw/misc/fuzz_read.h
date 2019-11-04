@@ -48,6 +48,14 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       stderr = fopen(tmp, "a+");
       output_redirected = 1;
     }
+#else
+    if (!output_redirected) {
+      fclose(stdin);
+      stdin = fopen("/dev/stdin", "r");
+      fclose(stderr);
+      stderr = fopen("/dev/stderr", "a+");
+      output_redirected = 1;
+    }
 #endif
     uint64_t res = dflt;
     int cnt = fread(&res, 1, sz, stdin);

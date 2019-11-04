@@ -12,6 +12,14 @@ First, we compile the code and make sure everything runs okay ...
 
 ### Running Without Docker, setting up the environment
 
+#### Decide on an input
+
+Most likely, you will need to modify `run-afl.sh` to change the `-i` flag
+to change the seed input that AFL will use for fuzzing. By default, this
+is a set of files under the `./testcases` directory.
+
+#### Start fuzzing!
+
 These files will rebuild the project, thought the scripts may fail 
 during the copying some of the files, so check that the relative paths
 in the tree of scripts starting from ./runall.sh are correct.
