@@ -19,10 +19,8 @@ a checkpoint, which AFL will restore to as it feeds in different fuzz inputs to 
 put this function call somewhere in your code where you want to restore to, e.g. modifying 
 `./target/arm/helper.c` to call this function whenever a specific interrupt, like a syscall, occurs.
 
-Another good option is to add it to the `afl_maybe_log()` function call in that same file by changing 
-the signature of that function to also take in a `CPUState *`, and then passing in `cpu` as an argument
-to the function call to `afl_maybe_log` under `./accel/tcg/cpu-exec.c`. By doing this, you can set the 
-checkpoint to occur when a particular PC is reached in the program.
+Another good option is to add instrumentation above the `afl_maybe_log()` function call in `cpu-exec.c` by 
+doing this, you can set the `afl_setup_snippet` call to trigger on a particular block in the program.
 If you choose this option, specify the PC to the command line to your qemu script, as in 
 `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`; this will be saved in an extern variable named
 `afl_entry_point` that you may then use in your own code to check for the proper place to call 

@@ -36,31 +36,30 @@
 
 #ifndef AFL_QEMU_CPU_INL_H_
 #define AFL_QEMU_CPU_INL_H_
+#include "../../afl/config.h"
+#include "qemu/typedefs.h"
+#include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
-#include <errno.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/mount.h>
 #include <sys/ptrace.h>
+#include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <sys/shm.h>
-#include "../../afl/config.h"
-#include "qemu/typedefs.h"
+#include <unistd.h>
 
 /***************************
  * VARIOUS AUXILIARY STUFF *
  ***************************/
 
-
 /* Function declarations. */
 void kill_children(void);
 void afl_setup(void);
-void afl_forkserver(CPUState * cpu);
+void afl_forkserver(CPUState *cpu);
 void afl_maybe_log(ulong cur_loc);
-void afl_setup_snippet(CPUState * cpu);
+void afl_setup_snippet(CPUState *cpu);
 
 /* Data structure passed around by the translate handlers: */
 struct afl_tsl {

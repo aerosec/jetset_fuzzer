@@ -23,27 +23,26 @@ static unsigned int afl_inst_rms = MAP_SIZE;
 /* This is equivalent to afl-as.h: */
 static unsigned char *afl_area_ptr;
 
-
 /* Sets up afl */
-inline void afl_setup_snippet(CPUState * cpu) {
-    if (!afl_setup_done) {
-        afl_setup();                                                             \
-        afl_forkserver(cpu);                                                     \
-    }
+inline void afl_setup_snippet(CPUState *cpu) {
+  if (!afl_setup_done) {
+    afl_setup();
+    afl_forkserver(cpu);
+  }
 }
 
 void kill_children(void) {
-    char *buff = NULL;
-    size_t len = 255;
-    char command[256] = {0};
+  char *buff = NULL;
+  size_t len = 255;
+  char command[256] = {0};
 
-    sprintf(command, "ps -ef|awk '$3==%u {print $2}'", getpid());
-    FILE *fp = (FILE *)popen(command, "r");
-    while (getline(&buff, &len, fp) >= 0) {
-        kill(atoi(buff), SIGKILL);
-    }
-    free(buff);
-    fclose(fp);
+  sprintf(command, "ps -ef|awk '$3==%u {print $2}'", getpid());
+  FILE *fp = (FILE *)popen(command, "r");
+  while (getline(&buff, &len, fp) >= 0) {
+    kill(atoi(buff), SIGKILL);
+  }
+  free(buff);
+  fclose(fp);
 }
 
 /*************************
@@ -230,11 +229,11 @@ int criu_fork(void) {
     }
 
     if (i_am_forkserver) {
-      FILE * f;
+      FILE *f;
       char tmp[1024];
 
       sprintf(tmp, "./syncdir/%s/criu/restore.log", afl_fuzzer_name);
-      f=fopen(tmp,"w");
+      f = fopen(tmp, "w");
       fclose(f);
       criu_set_log_file("restore.log");
 
