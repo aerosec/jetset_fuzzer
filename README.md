@@ -21,7 +21,7 @@ put this function call somewhere in your code where you want to restore to, e.g.
 
 Another good option is to add instrumentation above the `afl_maybe_log()` function call in 
 `cpu-exec.c` or to the `translate.c` files under `./target/{ARCH}`. 
-By doing this, you can set the `afl_setup_snippet` call to trigger on a particular block in the program.
+By doing this, you can set the `afl_setup_snippet` call to trigger on a particular instruction in the program.
 If you choose this option, specify the PC to the command line to your qemu script, as in 
 `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`; this will be saved in an extern variable named
 `afl_entry_point` that you may then use in your own code to check for the proper place to call 
