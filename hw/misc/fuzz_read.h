@@ -15,6 +15,7 @@ static int output_redirected = 0;
 static int wrote_to_parent = 0;
 
 static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
+#ifndef VALIDATING_AFL
   if (afl_setup_done) {
     if (!wrote_to_parent) {
       char tmp[1024] = {0};
@@ -37,7 +38,6 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       wrote_to_parent = 1;
     }
 
-#ifndef VALIDATING_AFL
     if (!output_redirected) {
       char tmp[1024];
       fclose(stdin);
@@ -51,9 +51,9 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
 #else
     if (!output_redirected) {
       fclose(stdin);
-      stdin = fopen("/dev/stdin", "r");
+      stdin = fopen("./stdin", "r");
       fclose(stderr);
-      stderr = fopen("/dev/stderr", "a+");
+      stderr = fopen("./stderr", "a+");
       output_redirected = 1;
     }
 #endif
@@ -62,7 +62,9 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
     if (cnt == sizeof(uint64_t)) {
       return res;
     }
+#ifndef VALIDATING_AFL
   }
+#endif
   return dflt;
 }
 

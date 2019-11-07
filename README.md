@@ -46,7 +46,10 @@ device I/O occurs, to feed fuzzer input into register state, memory, etc..
 By default, all of the above will make qemu non-runnable without also having an instance of afl.
 To regulate this, recompile with the VALIDATING_AFL flag; this will disable all the afl-specific
 instrumentation, though it will still include the now nop-homomorphic `AFL_QEMU_CPU_SNIPPET` in 
-the code (for purposes of making it to print out `itb->pc`).
+the code (for purposes of making it to print out `itb->pc`). Fuzzed input will be read from a 
+file called `./stdin` and stderr will be written to a file called `./stderr` in the current 
+directory. This is because the stdin/stderr fds are closed in some setups, but you can most likely
+change these beck to `/proc/self/stdin` and `stderr` respectively. 
 
 The command to compile is now 
 

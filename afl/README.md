@@ -71,7 +71,13 @@ Be sure to kill stuff after you are done!
 sudo docker kill $(sudo docker ps -a -q); sudo docker rm $(sudo docker ps -a -q)
 ```
 
-### A note on implementation
+### A note about syncdir output
+
+The `syncdir/{fuzzer name}/stdout` output produced labels each fuzz case with a number. There is a small
+oboe here; the file that gets produced under the `syncdir/{fuzzer name}/hangs` directory is the 
+fuzz case number plus 1.
+
+### How things work
 
 For a reference of how the thing works, check the commit logs.
 
@@ -79,4 +85,5 @@ Of course, the smart thing for the person who originally made this to have done 
 would have been to implement the forkserver independently of Qemu and not worry about single-run fuzzing speed,
 and to have used docker containers to isolate each run. Then we could just focus on lightweight snapshots like
 FirmAFL and other new-age fuzzers. This works for now, the rest is left to future work.
+
 
