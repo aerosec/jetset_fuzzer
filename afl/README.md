@@ -27,8 +27,11 @@ in the tree of scripts starting from ./runall.sh are correct.
 After this runs successfully, ^C to kill it; the environment for the docker 
 container is set up and the neccessary files are compiled.
 
+Please compile with warnings treated as errors. Ideally in the future this
+gets fixed by someone.
+
 ```
-sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -a -c "-DSYNTH_ENABLED=1" -s "afl-qemu-scripts/afl-qemu-trace-synth-cmu"
+sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -a -c "-Wno-error -DSYNTH_ENABLED=1" -s "afl-qemu-scripts/afl-qemu-trace-synth-cmu"
 ```
 
 or
