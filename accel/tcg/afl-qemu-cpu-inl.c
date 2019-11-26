@@ -4,12 +4,12 @@
 
 static unsigned char afl_fork_child;
 int afl_setup_done = 0;
-char *afl_fuzzer_name;
 ulong afl_entry_point, /* ELF entry point (_start) */
     afl_start_code,    /* .text start pointer      */
     afl_end_code;      /* .text end pointer        */
-char *afl_criu_dir;
-char *afl_criu_state_fns = 0;
+const char *afl_fuzzer_name;
+const char *afl_criu_dir;
+const char *afl_criu_state_fns = 0;
 int i_am_forkserver = 0;
 unsigned int afl_forksrv_pid;
 int criu_dump_done = 0;

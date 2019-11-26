@@ -5,9 +5,9 @@
  size_t boot_splash_filedata_size;
  uint8_t qemu_extra_params_fw[2];
 +extern ulong afl_entry_point, afl_start_code, afl_end_code;
-+extern char * afl_criu_dir;
-+extern char * afl_fuzzer_name;
-+extern char * afl_criu_state_fns;
++const extern char * afl_criu_dir;
++const extern char * afl_fuzzer_name;
++const extern char * afl_criu_state_fns;
  
  int icount_align_option;
  
