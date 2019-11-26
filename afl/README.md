@@ -10,15 +10,13 @@ Check the `runall.sh` script for a listing of command line args and explanations
 
 First, we compile the code and make sure everything runs okay ...
 
-### Running Without Docker, setting up the environment
-
-#### Decide on an input
+### Decide on an input
 
 Most likely, you will need to modify `run-afl.sh` to change the `-i` flag
 to change the seed input that AFL will use for fuzzing. By default, this
 is a set of files under the `./testcases` directory.
 
-#### Start fuzzing!
+### Start fuzzing!
 
 These files will rebuild the project, thought the scripts may fail 
 during the copying some of the files, so check that the relative paths
@@ -37,8 +35,10 @@ sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -a -c "-Wno-error -DSYNTH_ENAB
 or
 
 ```
-sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -a -s "afl-qemu-scripts/afl-qemu-trace-oracle-cmu"
+sudo ./runall.sh -q i386-softmmu/qemu-system-i386 -c "-Wno-error" -a -s "afl-qemu-scripts/afl-qemu-trace-oracle-cmu"
 ```
+
+If this works, everything is in proper order!
 
 Now, cd into the directory above this one, and use the Dockerfile to set up the container:
 
