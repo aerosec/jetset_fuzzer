@@ -46,6 +46,9 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       fclose(stderr);
       sprintf(tmp, "./syncdir/%s/stderr", afl_fuzzer_name);
       stderr = fopen(tmp, "a+");
+      fclose(stdout);
+      sprintf(tmp, "./syncdir/%s/stdout", afl_fuzzer_name);
+      stdout = fopen(tmp, "a+");
       output_redirected = 1;
     }
 #else
@@ -54,6 +57,8 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       stdin = fopen("./stdin", "r");
       fclose(stderr);
       stderr = fopen("./stderr", "a+");
+      fclose(stdout);
+      stdout = fopen("./stdout", "a+");
       output_redirected = 1;
     }
 #endif

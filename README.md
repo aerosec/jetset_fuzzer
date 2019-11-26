@@ -57,10 +57,11 @@ By default, all of the above will make qemu non-runnable without also having an 
 To regulate this, recompile with the VALIDATING_AFL flag; this will disable all the afl-specific
 instrumentation, though it will still include the call to `afl_maybe_log` in 
 `cpu-exec.c` (though now it doesn't do anything, you can modify this function so it does extra work 
-even when the rest of the fuzzing is disabled). Fuzzed input will be read from a 
-file called `./stdin` and stderr will be written to a file called `./stderr` in the current 
-directory. This is because the stdin/stderr fds are closed in some setups, but you can most likely
-change these beck to `/proc/self/stdin` and `stderr` respectively. 
+even when the rest of the fuzzing is disabled). 
+
+Fuzzed input will be read from a file called `./stdin`, stdout, stderr will be written to files 
+`./stdout`, `./stderr`, respectively. This was done for input processing, but you can change
+it back by modifying `hw/misc/fuzz_read.h`.
 
 The command to compile is now 
 
