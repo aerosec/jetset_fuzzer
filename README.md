@@ -46,7 +46,7 @@ that need to be reset after each run of the fuzzer.
 
 ### Feeding fuzzer input to the program
 
-Under `./hw/misc/fuzz_read.h` there is a function called `fuzzeed_read(default value, size in bytes)`,
+Under `./hw/misc/fuzz_read.h` there is a function called `fuzzed_read(default value, size in bytes)`,
 which reads from AFLs fuzzer input (or stdin), up to 8 bytes at a time, and returns them in a 
 `uint_64`. You can make a call to this function at any point in the qemu emulator, e.g., when some 
 device I/O occurs, to feed fuzzer input into register state, memory, etc..
