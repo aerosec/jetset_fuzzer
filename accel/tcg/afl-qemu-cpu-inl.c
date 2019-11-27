@@ -52,6 +52,7 @@ void kill_children(void) {
 /* Set up SHM region and initialize other stuff. */
 
 void afl_setup(void) {
+  #ifndef VALIDATING_AFL
 
   char *id_str = getenv(SHM_ENV_VAR), *inst_r = getenv("AFL_INST_RATIO");
 
@@ -92,12 +93,13 @@ void afl_setup(void) {
     afl_end_code = (ulong)-1;
   }
 
-  afl_setup_done = 1;
   /* pthread_atfork() seems somewhat broken in util/rcu.c, and I'm
      not entirely sure what is the cause. This disables that
      behaviour, and seems to work alright? */
-
   rcu_disable_atfork();
+  #endif
+
+  afl_setup_done = 1;
 }
 
 /**
