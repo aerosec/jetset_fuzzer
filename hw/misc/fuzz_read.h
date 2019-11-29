@@ -62,7 +62,7 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       output_redirected = 1;
     }
 #endif
-    uint64_t res = dflt;
+    uint64_t res = 0;
     int cnt = fread(&res, 1, sz, stdin);
     if (cnt == sz) {
       return res;
