@@ -8012,6 +8012,7 @@ int main(int argc, char** argv) {
 
   if (optind == argc || !in_dir || !out_dir) usage(argv[0]);
 
+  setenv("QEMU_LOG", "nochain", 1);
   setup_signal_handlers();
   check_asan_opts();
 
