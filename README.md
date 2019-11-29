@@ -24,14 +24,8 @@ Another good option is to add instrumentation above the `afl_maybe_log()` functi
 By doing this, you can not only set the `afl_setup_snippet` call to trigger on a particular instruction in
 the program, but also add arbitrary instrumentation, like printing register state, to that block of the code.
 Generally I start by adding a few print statements to figure out what the PC I want to checkpoint at is.
-For arbitrary instrumentation make sure to add the following so that that PC instruction is 
-always hit if you are expecting to run the instrumentation is always hit:
-
-```
-itb->cflags |= CF_NOCACHE;
-tb_phys_invalidate(itb, -1); // May need to change the second argument to be the page number of the itb.
-tcg_tb_remove(itb);
-```
+For arbitrary instrumentation make sure to set the environment variable `QEMU_LOG` to `"nochain" so that 
+every itb is retranslated.
 
 If you choose this option, it is possible to specify the PC to the command line to your qemu script, as in 
 `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`; this will be saved in an extern variable named
