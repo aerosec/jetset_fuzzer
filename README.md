@@ -29,7 +29,7 @@ always hit if you are expecting to run the instrumentation is always hit:
 
 ```
 itb->cflags |= CF_NOCACHE;
-tb_phys_invalidate(itb, 0);
+tb_phys_invalidate(itb, -1); // May need to change the second argument to be the page number of the itb.
 tcg_tb_remove(itb);
 ```
 

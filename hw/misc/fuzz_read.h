@@ -64,7 +64,7 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
 #endif
     uint64_t res = dflt;
     int cnt = fread(&res, 1, sz, stdin);
-    if (cnt == sizeof(uint64_t)) {
+    if (cnt == sz) {
       return res;
     }
 #ifndef VALIDATING_AFL
