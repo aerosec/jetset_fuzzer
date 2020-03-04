@@ -17,7 +17,11 @@ done
 `accel/tcg/afl-qemu-cpu-inl.h` defines a function called `afl_setup_snippet(CPUState * cpu)` that initializes
 a checkpoint, which AFL will restore to as it feeds in different fuzz inputs to the program. You should 
 put this function call somewhere in your code where you want to restore to, e.g. modifying 
-`./target/arm/helper.c` to call this function whenever a specific interrupt, like a syscall, occurs.
+`./target/arm/helper.c` to call this function whenever a specific interrupt, like a syscall, occurs. 
+
+However, make sure this occurs after at least one basic block has been executed, or bad things will happen.
+Additionally, make sure you aren't doing fuzzing inside of a timer-triggered hardware interaction; 
+non-deterministic fuzz firings will mess with AFL's control server timing.
 
 Another good option is to add instrumentation above the `afl_maybe_log()` function call in 
 `cpu-exec.c` under `./accel/tcg/`. 

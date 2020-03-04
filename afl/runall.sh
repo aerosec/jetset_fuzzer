@@ -2,6 +2,9 @@
 
 # Script for running AFL fuzzer with full system qemu.
 
+# Disable block chaining
+export QEMU_LOG="nochain"
+
 FUZZ_NAME='f0'
 FUZZ_TYPE='M'
 ADDIT_CFLAGS=''
