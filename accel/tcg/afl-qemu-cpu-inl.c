@@ -440,14 +440,6 @@ void afl_forkserver(CPUState *cpu) {
     /* Parent. */
     close(TSL_FD);
 
-    fprintf(stderr, "WRITING CHILDID TO AFL %d\n", child_pid);
-    if (write(FORKSRV_FD + 1, &child_pid, 4) != 4) {
-      fprintf(stderr, "FAILED TO WRITE TO AFL! %s\n", strerror(errno));
-      exit(5);
-    }
-
-    fprintf(stderr, "WROTE TO AFL!\n");
-
     if (ptrace(PTRACE_ATTACH, child_pid, NULL, NULL) < 0) {
       fprintf(stderr, "PTRACE ATTACH ERROR. %s", strerror(errno));
       exit(5);
@@ -460,6 +452,13 @@ void afl_forkserver(CPUState *cpu) {
     if (ptrace(PTRACE_CONT, child_pid, 0, 0) < 0) {
       fprintf(stderr, "FAILED TO CONT PROC! %s\n", strerror(errno));
     }
+
+    fprintf(stderr, "WRITING CHILDID TO AFL %d\n", child_pid);
+    if (write(FORKSRV_FD + 1, &child_pid, 4) != 4) {
+      fprintf(stderr, "FAILED TO WRITE TO AFL! %s\n", strerror(errno));
+      exit(5);
+    }
+    fprintf(stderr, "WROTE TO AFL!\n");
 
     while (1) {
       int w = waitpid(child_pid, &status, __WALL);
