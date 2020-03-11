@@ -428,11 +428,20 @@ void afl_forkserver(CPUState *cpu) {
       /* Communicate pid to AFL for timeouts */
       child_pid = getpid();
 
-      /* Child process. Close descriptors and run free. */
-      fprintf(stderr, "STARTING CHILD %d\n", child_pid);
+      fprintf(stderr, "CHILD %d WAITING FOR PTRACE ATTACH\n", child_pid);
+      /* Wait for a SIGSTOP which means the forkserver has attached to
+         monitor exit conditions */
+      sigset_t sigset;
+      sigemptyset(&sigset);
+      sigaddset(&sigset, SIGUSR2);
+      int sig;
+      sigwait(&sigset, &sig);
 
+
+      /* Close descriptors and run free. */
       afl_fork_child = 1;
       close(t_fd[0]);
+      fprintf(stderr, "STARTING CHILD %d\n", child_pid);
 
       return;
     }
