@@ -49,7 +49,33 @@ which reads from AFLs fuzzer input (or stdin), up to 8 bytes at a time, and retu
 `uint_64`. You can make a call to this function at any point in the qemu emulator, e.g., when some 
 device I/O occurs, to feed fuzzer input into register state, memory, etc..
 
-## Compiling for validation
+## Setting Up Crash Conditions
+
+Oddly enough, we treat non-zero exits as crashes, since signals inside the child QEMU process 
+are handled inside the guest machine, and the emulator should not send signals under expected
+execution contions.
+
+We could actually say a signal in the child is a fatal error but that is left as a TODO.
+
+This noted, you will want to add exit condtions to the QEMU child process that the fork server 
+will see as crashes.
+
+The fork server communicates to afl the exit code of the child process, thus, to signal SIGSEGV, you 
+should add 
+
+```
+exit(11); 
+```
+
+and to signal a normal exit,
+
+```
+exit(0);
+```
+
+This is defined under `accel/tcg/afl_*.c` if you would like to change this functionality somehow.
+
+# Compiling for validation
 
 By default, all of the above will make qemu non-runnable without also having an instance of afl.
 To regulate this, recompile with the VALIDATING_AFL flag; this will disable all the afl-specific
