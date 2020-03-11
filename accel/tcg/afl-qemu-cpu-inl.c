@@ -436,6 +436,8 @@ void afl_forkserver(CPUState *cpu) {
       fprintf(stderr, "FAILED TO CONT PROC! %s\n", strerror(errno));
     }
 
+    kill(child_pid, SIGUSR2);
+
     fprintf(stderr, "WRITING CHILDID TO AFL %d\n", child_pid);
     if (write(FORKSRV_FD + 1, &child_pid, 4) != 4) {
       fprintf(stderr, "FAILED TO WRITE TO AFL! %s\n", strerror(errno));

@@ -85,6 +85,13 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       /* Wait for parent to PTRACE_ATTACH */
       while (!debugger_is_attached()) {
       }
+
+      /* Wait for PTRACE_CONT */
+      sigset_t sigset;
+      sigemptyset(&sigset);
+      sigaddset(&sigset, SIGUSR2);
+      int sig;
+      sigwait(&sigset, &sig);
     }
 
     if (!output_redirected) {
