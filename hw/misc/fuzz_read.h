@@ -11,19 +11,64 @@
 
 extern int afl_setup_done;
 extern char *afl_fuzzer_name;
-static int output_redirected = 0;
+int output_redirected = 0;
 static int wrote_to_parent = 0;
+
+/**
+ * Checks for a ptrace process attached to the child; used to tell when the
+ * fuzzer is ready to begin execution.
+ */
+bool debugger_is_attached() {
+  char buf[4096];
+
+  const int status_fd = open("/proc/self/status", O_RDONLY);
+  if (status_fd == -1)
+    return false;
+
+  int num_read = read(status_fd, buf, sizeof(buf) - 1);
+  if (num_read <= 0) {
+    return false;
+  }
+
+  char tracerPidString[] = "TracerPid:";
+  char *tracer_pid_ptr = strstr(buf, tracerPidString);
+  if (!tracer_pid_ptr) {
+    return false;
+  }
+
+  for (char *characterPtr = tracer_pid_ptr + sizeof(tracerPidString) - 1;
+       characterPtr <= buf + num_read; ++characterPtr) {
+    if (isspace(*characterPtr)) {
+
+      continue;
+    } else {
+
+      return isdigit(*characterPtr) != 0 && *characterPtr != '0';
+    }
+  }
+
+  return false;
+}
 
 static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
 #ifndef VALIDATING_AFL
   if (afl_setup_done) {
+
+    /* Do the initial setup to let the parent know who we are */
+    /* NOTE: why is this here? Because we want to start fuzzing
+       only once we've hit the point of fuzzing, and not just
+       when afl_setup_snippet is called; this allows for
+       more flexible fuzzing positions. */
     if (!wrote_to_parent) {
+      /* Get the parent's pid */
       char tmp[1024] = {0};
       sprintf(tmp, "./syncdir/%s/parent_pid", afl_fuzzer_name);
       FILE *pid_file = fopen(tmp, "r");
       pid_t fs_pid;
       fread(&fs_pid, sizeof(pid_t), 1, pid_file);
       fclose(pid_file);
+
+      /* Tell the parent our PID */
       char properfd[1024];
       sprintf(properfd, "/proc/%d/fd/%d", fs_pid, 200); // FORKSRV_PID + 2
       int comm_channel = open(properfd, O_WRONLY);
@@ -36,6 +81,10 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       close(comm_channel);
       fprintf(stderr, "WROTE TO PARENT\n");
       wrote_to_parent = 1;
+
+      /* Wait for parent to PTRACE_ATTACH */
+      while (!debugger_is_attached()) {
+      }
     }
 
     if (!output_redirected) {
@@ -52,15 +101,17 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       output_redirected = 1;
     }
 #else
-    if (!output_redirected) {
-      fclose(stdin);
-      stdin = fopen("./stdin", "r");
-      fclose(stderr);
-      stderr = fopen("./stderr", "a+");
-      fclose(stdout);
-      stdout = fopen("./stdout", "a+");
-      output_redirected = 1;
-    }
+  if (!output_redirected) {
+    fclose(stdin);
+    stdin = fopen("./stdin", "r");
+    /*
+    fclose(stderr);
+    stderr = fopen("./stderr", "a+");
+    fclose(stdout);
+    stdout = fopen("./stdout", "a+");
+    */
+    output_redirected = 1;
+  }
 #endif
     uint64_t res = 0;
     int cnt = fread(&res, 1, sz, stdin);

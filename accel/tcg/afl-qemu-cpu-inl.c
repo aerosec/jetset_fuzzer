@@ -276,6 +276,8 @@ int criu_fork(void) {
 
       signal(SIGCHLD, SIG_IGN); // Ignore child death
 
+      /* NOTE: this is written to in fuzz_read.h, aka when the
+         child does its first fuzzed read */
       npid = 0;
       fprintf(stderr, "PARENT READING FROM FD %d\n", FORKSRV_FD + 3);
       if (read(FORKSRV_FD + 3, &npid, 4) != 4) {
@@ -342,25 +344,6 @@ int criu_fork(void) {
       /* If it has, we are not the forkserver, so we return, but
        we will need to communicate to the forkserver */
       setsid();
-
-      /* sprintf(tmp, "./syncdir/%s/parent_pid", afl_fuzzer_name); */
-      /* FILE *pid_file = fopen(tmp, "r"); */
-      /* pid_t fs_pid; */
-      /* fread(&fs_pid, sizeof(pid_t), 1, pid_file); */
-      /* fclose(pid_file); */
-
-      /* char properfd[1024]; */
-      /* sprintf(properfd, "/proc/%d/fd/%d", fs_pid, FORKSRV_FD + 2); */
-      /* int comm_channel = open(properfd, O_WRONLY); */
-      /* fprintf(stderr, "WRITING TO PARENTS CHANNEL %s\n", properfd); */
-      /* int my_pid = getpid(); */
-      /* if (write(comm_channel, &my_pid, 4) != 4) { */
-      /*   fprintf(stderr, "FAILED TO WRITE TO PIPE! %s\n", strerror(errno)); */
-      /*   exit(5); */
-      /* } */
-      /* close(comm_channel); */
-
-      /* fprintf(stderr, "WROTE TO PARENT\n"); */
 
       close(fd);
       fprintf(stderr, "CHILD SAW FS FLDR EXISTS\n");
@@ -439,6 +422,7 @@ void afl_forkserver(CPUState *cpu) {
     /* Parent. */
     close(TSL_FD);
 
+    /* NOTE: Sends SIGSTOP to child, handled in fuzz_read.h */
     if (ptrace(PTRACE_ATTACH, child_pid, NULL, NULL) < 0) {
       fprintf(stderr, "PTRACE ATTACH ERROR. %s", strerror(errno));
       exit(5);
