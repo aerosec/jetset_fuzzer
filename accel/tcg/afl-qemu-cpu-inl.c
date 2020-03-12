@@ -511,16 +511,5 @@ inline void afl_maybe_log(ulong cur_loc) {
 
   afl_area_ptr[cur_loc ^ prev_loc]++;
   prev_loc = cur_loc >> 1;
-
-  if (!afl_criu_notified) {
-    FILE *pid_f = fopen("/tmp/afl_parent_pid", "r");
-    pid_t parent_pid;
-    fread(&parent_pid, sizeof(pid_t), 1, pid_f);
-    fclose(pid_f);
-    fprintf(stderr, "SENDING SIGNAL TO START TIMER.\n");
-    kill(parent_pid, SIGUSR2); // tell afl to start
-    fflush(stderr);
-    afl_criu_notified = 1;
-  }
 #endif
 }
