@@ -79,6 +79,7 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
         exit(5);
       }
       close(comm_channel);
+
       fprintf(stderr, "WROTE TO PARENT\n");
       wrote_to_parent = 1;
 
@@ -92,15 +93,6 @@ static uint64_t fuzzed_read(uint64_t dflt, size_t sz) {
       sigaddset(&sigset, SIGUSR2);
       int sig;
       sigwait(&sigset, &sig);
-
-      /* Notify afl-fuzz (not the forkserver!) that we are started */
-      FILE *pid_f = fopen("/tmp/afl_parent_pid", "r");
-      pid_t parent_pid;
-      fread(&parent_pid, sizeof(pid_t), 1, pid_f);
-      fclose(pid_f);
-      fprintf(stderr, "SENDING SIGNAL TO START TIMER.\n");
-      kill(parent_pid, SIGUSR2); // tell afl to start
-      fflush(stderr);
     }
 
     if (!output_redirected) {

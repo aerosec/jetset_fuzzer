@@ -2423,6 +2423,10 @@ static u8 run_target(char** argv, u32 timeout) {
   int sig;
   sigwait(&sigset, &sig);
   fprintf(stderr, "GOT SIGNAL TO START CHILD!\n");
+
+  /* Account for small delay in signal propagation */
+  usleep(10000);
+
   number_fuzzed++;
 
   /* Configure timeout, as requested by user, then wait for child to terminate. */

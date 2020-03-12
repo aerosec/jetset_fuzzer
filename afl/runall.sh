@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 # Script for running AFL fuzzer with full system qemu.
-
-# Disable block chaining
 export QEMU_LOG="nochain"
 
 FUZZ_NAME='f0'
@@ -87,9 +85,9 @@ if [ $REBUILD_QEMU -ne 0 ]; then
     make -j30 || exit 1
     cd ..
     if [ "$ADDIT_CFLAGS" != "" ]; then
-        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $ADDIT_CFLAGS" -j30 || exit 1
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS -O3 $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c $ADDIT_CFLAGS" -j30 || exit 1
     else
-        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30 || exit 1
+        make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS -O3 $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c" -j30 || exit 1
     fi
     sleep 1
     cd afl
@@ -98,7 +96,7 @@ fi
 
 if [ $REBUILD_AFL -ne 0 ]; then
     echo "RECOMPILING AFL"
-    make || exit 1
+    make -j30 || exit 1
 fi
 
 if [ "$QEMU_TRACE_SCR" != '' ]; then

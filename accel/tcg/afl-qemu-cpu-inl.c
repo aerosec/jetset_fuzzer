@@ -52,7 +52,7 @@ void kill_children(void) {
 /* Set up SHM region and initialize other stuff. */
 
 void afl_setup(void) {
-  #ifndef VALIDATING_AFL
+#ifndef VALIDATING_AFL
 
   char *id_str = getenv(SHM_ENV_VAR), *inst_r = getenv("AFL_INST_RATIO");
 
@@ -97,7 +97,7 @@ void afl_setup(void) {
      not entirely sure what is the cause. This disables that
      behaviour, and seems to work alright? */
   rcu_disable_atfork();
-  #endif
+#endif
 
   afl_setup_done = 1;
 }
@@ -486,10 +486,34 @@ void afl_forkserver(CPUState *cpu) {
 }
 /* The equivalent of the tuple logging routine from afl-as.h. */
 
+int entry_mux = 0; /* Mux for signaling when to tell the fork server
+                      we are actively executing */
+ulong entry_pc = -1;
+extern int output_redirected;
 inline void afl_maybe_log(ulong cur_loc) {
 #ifndef VALIDATING_AFL
-
   static __thread ulong prev_loc;
+
+  /* If we have already done a fuzzed read */
+  if (output_redirected) {
+    /* Hit AFL setup, but haven't recorded pc */
+    if (!entry_mux) { 
+      entry_mux = 1;
+      entry_pc = cur_loc;
+    /* Recorded pc, and then started executing a different block */
+    } else if (entry_mux == 1 && cur_loc != entry_pc) {
+      entry_mux = 2;
+
+      /* Notify afl-fuzz (not the forkserver!) that we are started */
+      FILE *pid_f = fopen("/tmp/afl_parent_pid", "r");
+      pid_t parent_pid;
+      fread(&parent_pid, sizeof(pid_t), 1, pid_f);
+      fclose(pid_f);
+      fprintf(stderr, "SENDING SIGNAL TO START TIMER.\n");
+      kill(parent_pid, SIGUSR2); // tell afl to start
+      fflush(stderr);
+    }
+  }
 
   /* Optimize for cur_loc > afl_end_code, which is the most likely case on
      Linux systems. */
