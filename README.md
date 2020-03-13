@@ -41,7 +41,10 @@ If you choose this option, it is possible to specify the PC to the command line 
 must be included. 
 
 `-afl-state-files` is an optional command line option, which is a comma-delimited list of any files 
-that need to be reset after each run of the fuzzer.
+that need to be reset after each run of the fuzzer (i.e. files whose state can be modified by QEMU's runtime,
+such as databases.); this works by copying the files from `./syncdir/[fuzzer-name]/criu/[files]` into 
+a folder labeled "data" under the fuzzer's specific directory, i.e. `-afl-state-files ./syncdir/$1/data/data.bin`, 
+and these files should be added to the `/afl/data` directory, so they may be set up properly during fuzzing. 
 
 #### Setting afl-criu-dir to tmpfs
 
@@ -55,7 +58,9 @@ sudo mount -t tmpfs -o size=100G tmpfs /mnt/tmpfs
 
 then specify `-afl-criu-dir /mnt/tmpfs/syncdir/$1/criu` to the qemu run process.
 
-*But make sure to remove the syncdir under tmpfs after each run!!!*
+But make sure to remove the syncdir under tmpfs after each run!
+
+Also, see additional instructions in the readme under the /afl directory.
 
 ### Feeding fuzzer input to the program
 

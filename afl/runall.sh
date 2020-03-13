@@ -113,14 +113,17 @@ fi
 
 if [ "$TMPFS_PATH" != '' ]; then
     echo "SETTING UP TMPFS"
-    cp afl-fuzz run-afl.sh afl-qemu afl-qemu-trace $TMPFS_PATH/
-    cp -r testcases $TMPFS_PATH/
-    cp -r data $TMPFS_PATH/
+    if [ ! -f $TMPFS_PATH/afl-fuzz ]; then
+      cp afl-fuzz run-afl.sh afl-qemu afl-qemu-trace $TMPFS_PATH/
+      cp -r testcases $TMPFS_PATH/
+      cp -r data $TMPFS_PATH/
+    fi 
     cd $TMPFS_PATH
 fi
 
 echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
 mkdir -p syncdir/$FUZZ_NAME > /dev/null 2>&1
+cp -r data syncdir/$FUZZ_NAME/
 ./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
 sleep 0.2
 ./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN

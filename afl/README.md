@@ -97,6 +97,10 @@ If you have the RAM for it, you should go ahead and run the whole process inside
 is controlled by passing the `-f` flag to `runall.sh` with an argument of the location of the 
 tmpfs root to run the script at.
 
-You may need to add some additional directory `cp` commands to the runall script, for the testcases/ directory or 
-other directories that contain flash data to be persisted across runs.
+Important: the first run, if the data is not copied, will copy the setup data to the tmpfs directory. 
+You should make sure this step completes before starting docker containers, because otherwise there
+will be race conditions in overwriting the files in this directory.
+
+You may need to add some additional directory `cp` commands to the runall script, for the testcase input 
+directory for AFL.
 
