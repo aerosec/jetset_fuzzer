@@ -37,7 +37,7 @@
 #ifndef AFL_QEMU_CPU_INL_H_
 #define AFL_QEMU_CPU_INL_H_
 #include "../../afl/config.h"
-#include "qemu/typedefs.h"
+#include "criu/time-dialation.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>

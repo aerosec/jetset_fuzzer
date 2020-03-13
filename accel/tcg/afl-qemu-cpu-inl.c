@@ -234,7 +234,7 @@ int criu_fork(void) {
       FILE *f;
       char tmp[1024];
 
-      sprintf(tmp, "./syncdir/%s/criu/restore.log", afl_fuzzer_name);
+      sprintf(tmp, "%s/restore.log", afl_criu_dir);
       f = fopen(tmp, "w");
       fclose(f);
       criu_set_log_file("restore.log");
@@ -296,7 +296,10 @@ int criu_fork(void) {
     }
 
   } else {
-    mkdir(afl_criu_dir, S_IRWXU | S_IRWXG | S_IRWXO);
+    char criu_dir_mkdir_cmd[4096];
+    sprintf(criu_dir_mkdir_cmd, "mkdir -m 777 -p %s", afl_criu_dir);
+    fprintf(stderr, "%s\n", criu_dir_mkdir_cmd);
+    system(criu_dir_mkdir_cmd);
     int fd = open(afl_criu_dir, O_DIRECTORY);
 
     shmdt(afl_area_ptr); // for dump
@@ -308,6 +311,9 @@ int criu_fork(void) {
     close(0);
     close(1);
     close(2);
+
+    /* Account for time dialation */
+    set_criu_dump_time();
 
     criu_dump();
 
@@ -347,6 +353,10 @@ int criu_fork(void) {
 
       close(fd);
       fprintf(stderr, "CHILD SAW FS FLDR EXISTS\n");
+
+      /* Account for time dialation */
+      set_criu_restore_time();
+
       return 0;
     }
 
@@ -497,10 +507,10 @@ inline void afl_maybe_log(ulong cur_loc) {
   /* If we have already done a fuzzed read */
   if (output_redirected) {
     /* Hit AFL setup, but haven't recorded pc */
-    if (!entry_mux) { 
+    if (!entry_mux) {
       entry_mux = 1;
       entry_pc = cur_loc;
-    /* Recorded pc, and then started executing a different block */
+      /* Recorded pc, and then started executing a different block */
     } else if (entry_mux == 1 && cur_loc != entry_pc) {
       entry_mux = 2;
 
@@ -512,28 +522,29 @@ inline void afl_maybe_log(ulong cur_loc) {
       fprintf(stderr, "SENDING SIGNAL TO START TIMER.\n");
       kill(parent_pid, SIGUSR2); // tell afl to start
       fflush(stderr);
+    } else if (entry_mux == 2) {
+      /* Optimize for cur_loc > afl_end_code, which is the most likely case on
+         Linux systems. */
+      if (cur_loc > afl_end_code || cur_loc < afl_start_code || !afl_area_ptr)
+        return;
+
+      /* Looks like QEMU always maps to fixed locations, so ASAN is not a
+         concern. Phew. But instruction addresses may be aligned. Let's mangle
+         the value to get something quasi-uniform. */
+
+      cur_loc = (cur_loc >> 4) ^ (cur_loc << 8);
+      cur_loc &= MAP_SIZE - 1;
+
+      /* Implement probabilistic instrumentation by looking at scrambled block
+         address. This keeps the instrumented locations stable across runs. */
+
+      if (cur_loc >= afl_inst_rms)
+        return;
+
+      afl_area_ptr[cur_loc ^ prev_loc]++;
+      prev_loc = cur_loc >> 1;
     }
   }
 
-  /* Optimize for cur_loc > afl_end_code, which is the most likely case on
-     Linux systems. */
-  if (cur_loc > afl_end_code || cur_loc < afl_start_code || !afl_area_ptr)
-    return;
-
-  /* Looks like QEMU always maps to fixed locations, so ASAN is not a
-     concern. Phew. But instruction addresses may be aligned. Let's mangle
-     the value to get something quasi-uniform. */
-
-  cur_loc = (cur_loc >> 4) ^ (cur_loc << 8);
-  cur_loc &= MAP_SIZE - 1;
-
-  /* Implement probabilistic instrumentation by looking at scrambled block
-     address. This keeps the instrumented locations stable across runs. */
-
-  if (cur_loc >= afl_inst_rms)
-    return;
-
-  afl_area_ptr[cur_loc ^ prev_loc]++;
-  prev_loc = cur_loc >> 1;
 #endif
 }

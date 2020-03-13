@@ -37,10 +37,25 @@ If you choose this option, it is possible to specify the PC to the command line 
 `afl_setup_snippet`.
 
 `-afl-start` and `-afl-end` should generally be kept at 0 and -1 unless you know what you are doing.
-`-afl-criu-dir ./syncdir/$1/criu/ -afl-fuzzer-name $1` should also stay the same, and must be included. 
+`-afl-criu-dir ./syncdir/$1/criu/ -afl-fuzzer-name $1` should probably stay the same (see below), and 
+must be included. 
 
 `-afl-state-files` is an optional command line option, which is a comma-delimited list of any files 
 that need to be reset after each run of the fuzzer.
+
+#### Setting afl-criu-dir to tmpfs
+
+Since restoring can be slow, it is useful to keep CRIU state in RAM, which dramatically speeds up 
+restores; you will need to create a large in-ram file system, however, and specify it on the command 
+line, something like:
+
+```
+sudo mount -t tmpfs -o size=100G tmpfs /mnt/tmpfs
+```
+
+then specify `-afl-criu-dir /mnt/tmpfs/syncdir/$1/criu` to the qemu run process.
+
+*But make sure to remove the syncdir under tmpfs after each run!!!*
 
 ### Feeding fuzzer input to the program
 

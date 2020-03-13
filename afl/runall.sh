@@ -10,6 +10,7 @@ QEMU_TRACE_SCR=''
 CPU_PIN=''
 REBUILD_QEMU=0
 REBUILD_AFL=0
+TMPFS_PATH=''
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -65,6 +66,12 @@ do
             REBUILD_AFL=1
             shift # past argument
             ;;
+        # Whether to run AFL inside of a tmpfs
+        -f|--fast)
+            TMPFS_PATH="$2"
+            shift # past argument
+            shift # past value
+            ;;
         --default)
             DEFAULT=YES
             shift # past argument
@@ -104,10 +111,16 @@ if [ "$QEMU_TRACE_SCR" != '' ]; then
     cp $QEMU_TRACE_SCR afl-qemu-trace
 fi
 
-rm -rf syncdir/$FUZZ_NAME
+if [ "$TMPFS_PATH" != '' ]; then
+    echo "SETTING UP TMPFS"
+    cp afl-fuzz run-afl.sh afl-qemu afl-qemu-trace $TMPFS_PATH/
+    cp -r testcases $TMPFS_PATH/
+    cp -r data $TMPFS_PATH/
+    cd $TMPFS_PATH
+fi
+
 echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
-mkdir syncdir/ > /dev/null 2>&1
-mkdir syncdir/$FUZZ_NAME
+mkdir -p syncdir/$FUZZ_NAME > /dev/null 2>&1
 ./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
 sleep 0.2
 ./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN

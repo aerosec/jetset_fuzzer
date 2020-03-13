@@ -71,7 +71,9 @@ See `../scripts/afl-fuzz-ex.sh` for an example of spinning up multiple container
 Be sure to kill stuff after you are done! 
 
 ```
-sudo docker kill $(sudo docker ps -a -q); sudo docker rm $(sudo docker ps -a -q)
+sudo docker stop $(sudo docker ps -a -q); sudo docker kill $(sudo docker ps -a -q); sudo docker rm $(sudo docker ps -a -q)
+# Clean up dangling images
+sudo docker rmi $(sudo docker images -qf dangling=true);
 ```
 
 ### A note about syncdir output
@@ -89,4 +91,12 @@ would have been to implement the forkserver independently of Qemu and not worry 
 and to have used docker containers to isolate each run. Then we could just focus on lightweight snapshots like
 FirmAFL and other new-age fuzzers. This works for now, the rest is left to future work.
 
+### Speeding up using tmpfs
+
+If you have the RAM for it, you should go ahead and run the whole process inside of a tmpfs; this 
+is controlled by passing the `-f` flag to `runall.sh` with an argument of the location of the 
+tmpfs root to run the script at.
+
+You may need to add some additional directory `cp` commands to the runall script, for the testcases/ directory or 
+other directories that contain flash data to be persisted across runs.
 
