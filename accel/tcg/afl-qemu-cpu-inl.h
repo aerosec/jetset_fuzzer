@@ -49,6 +49,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /***************************
  * VARIOUS AUXILIARY STUFF *
@@ -60,6 +61,8 @@ void afl_setup(void);
 void afl_forkserver(CPUState *cpu);
 void afl_maybe_log(ulong cur_loc);
 void afl_setup_snippet(CPUState *cpu);
+void afl_fuzz_read(uint8_t *dest, int num_bytes);
+int afl_setup_isdone(void);
 
 /* Data structure passed around by the translate handlers: */
 struct afl_tsl {

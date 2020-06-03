@@ -117,13 +117,22 @@ if [ "$TMPFS_PATH" != '' ]; then
       cp afl-fuzz run-afl.sh afl-qemu afl-qemu-trace $TMPFS_PATH/
       cp -r testcases $TMPFS_PATH/
       cp -r data $TMPFS_PATH/
-    fi 
+    fi
     cd $TMPFS_PATH
 fi
 
 echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
 mkdir -p syncdir/$FUZZ_NAME > /dev/null 2>&1
 cp -r data syncdir/$FUZZ_NAME/
-./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
+
+# We do this weird bash mumbojumbo below so that we can write
+# the afl fuzzer's own pid to a file for use by subprocesses
+# inside of the syncdir, which can be in tmpfs, by using the
+# nicely accessible BASHPID env var (otherwise, the current shell
+# would be the one executing the command). However, this requires
+# us to use the coproc keyword so we can wait on the shell.
+
+# Run twice; once to set up state, once to start fuzzing
+bash -c "./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN"
 sleep 0.2
-./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN
+bash -c "./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN"

@@ -21,7 +21,7 @@ put this function call somewhere in your code where you want to restore to, e.g.
 
 However, make sure this occurs after at least one basic block has been executed, or bad things will happen.
 Additionally, make sure you aren't doing fuzzing inside of a timer-triggered hardware interaction; 
-non-deterministic fuzz firings will mess with AFL's control server timing.
+non-deterministic fuzz firings will mess with AFL's control server timing (maybe? Haven't tested extensively)
 
 Another good option is to add instrumentation above the `afl_maybe_log()` function call in 
 `cpu-exec.c` under `./accel/tcg/`. 
@@ -29,7 +29,9 @@ By doing this, you can not only set the `afl_setup_snippet` call to trigger on a
 the program, but also add arbitrary instrumentation, like printing register state, to that block of the code.
 Generally I start by adding a few print statements to figure out what the PC I want to checkpoint at is.
 For arbitrary instrumentation make sure to set the environment variable `QEMU_LOG` to `"nochain" so that 
-every itb is retranslated.
+every itb is retranslated (you may also need to comment out the lines that are commented out in `example/cpu-exec.c`)
+
+An example of instrumentation for syscall fuzzing in a sensitive piece of hardware is in `example/cpu-exec.c`.
 
 If you choose this option, it is possible to specify the PC to the command line to your qemu script, as in 
 `/afl/afl-qemu-scripts`, e.g. `-afl-entry 0x1033734`; this will be saved in an extern variable named

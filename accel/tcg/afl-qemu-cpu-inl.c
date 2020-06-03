@@ -3,15 +3,19 @@
 #define TSL_FD (FORKSRV_FD - 1)
 
 static unsigned char afl_fork_child;
-int afl_setup_done = 0;
 ulong afl_entry_point, /* ELF entry point (_start) */
     afl_start_code,    /* .text start pointer      */
     afl_end_code;      /* .text end pointer        */
 const char *afl_fuzzer_name;
 const char *afl_criu_dir;
 const char *afl_criu_state_fns = 0;
+
+static int afl_setup_done = 0;
 int i_am_forkserver = 0;
+
+/* initial forkserver pid during dump in child */
 unsigned int afl_forksrv_pid;
+
 int criu_dump_done = 0;
 int afl_criu_notified = 0;
 long fuzzed_cnt = 0;
@@ -25,10 +29,28 @@ static unsigned char *afl_area_ptr;
 
 /* Sets up afl */
 inline void afl_setup_snippet(CPUState *cpu) {
+#ifndef VALIDATING_AFL
   if (!afl_setup_done) {
+    /* Account for time dialation */
+    set_criu_dump_time();
+
+    /* Pause the VM */
+    vm_stop(4);
+
     afl_setup();
     afl_forkserver(cpu);
+
+    /* In child, start the VM up again */
+    vm_start();
+
+    /* Notify afl-fuzz (not the forkserver!) that we are started */
+    sigusr2_afl();
+
+    /* We do this as close to the point where execution resumes as possible, in
+       order to give the illusion that nothing at all happened */
+    set_criu_restore_time();
   }
+#endif
 }
 
 void kill_children(void) {
@@ -276,10 +298,8 @@ int criu_fork(void) {
 
       signal(SIGCHLD, SIG_IGN); // Ignore child death
 
-      /* NOTE: this is written to in fuzz_read.h, aka when the
-         child does its first fuzzed read */
       npid = 0;
-      fprintf(stderr, "PARENT READING FROM FD %d\n", FORKSRV_FD + 3);
+      fprintf(stderr, "PARENT READING CHILD PID\n");
       if (read(FORKSRV_FD + 3, &npid, 4) != 4) {
         fprintf(stderr, "PARENT READ FAILED!\n");
         exit(5);
@@ -312,11 +332,9 @@ int criu_fork(void) {
     close(1);
     close(2);
 
-    /* Account for time dialation */
-    set_criu_dump_time();
-
     criu_dump();
 
+    /* Now, the child will start here*/
     char tmp[1024];
     sprintf(tmp, "./syncdir/%s/.cur_input", afl_fuzzer_name);
     stdin = fopen(tmp, "r");
@@ -324,51 +342,72 @@ int criu_fork(void) {
     stderr = fopen(tmp, "a+");
     sprintf(tmp, "./syncdir/%s/stdout", afl_fuzzer_name);
     stdout = fopen(tmp, "a+");
-    /* Now, the child will start here*/
-    fprintf(stderr, "RESTORING SHARED MEM\n");
 
-    /* We check to see if a forkserver exists file has been created */
-    if (stat(afl_criu_dir_fs_exists, &sb) == 0) {
-      // Reinstate shared memory for fuzzing
-      char afl_criu_dir_shm_id[128];
-      strcpy(afl_criu_dir_shm_id, afl_criu_dir);
-      strcat(afl_criu_dir_shm_id, "shm_id");
-      char id_str[128];
-      FILE *shm_f = fopen(afl_criu_dir_shm_id, "r");
-      char c;
-      int i = 0;
-      while (EOF != (c = fgetc(shm_f))) {
-        id_str[i++] = c;
-      }
-      id_str[i] = 0;
-      shm_id = atoi(id_str);
-      afl_area_ptr = shmat(shm_id, NULL, 0);
-
-      fprintf(stderr, "CRIU CHECKPOINT DONE, ID_STR: %s PID: %d\n", id_str,
-              getpid());
-
-      /* If it has, we are not the forkserver, so we return, but
-       we will need to communicate to the forkserver */
-      setsid();
-
-      close(fd);
-      fprintf(stderr, "CHILD SAW FS FLDR EXISTS\n");
-
-      /* Account for time dialation */
-      set_criu_restore_time();
-
-      return 0;
+    /* Reinstate shared memory for fuzzing */
+    char afl_criu_dir_shm_id[128];
+    strcpy(afl_criu_dir_shm_id, afl_criu_dir);
+    strcat(afl_criu_dir_shm_id, "shm_id");
+    char id_str[128];
+    FILE *shm_f = fopen(afl_criu_dir_shm_id, "r");
+    char c;
+    int i = 0;
+    while (EOF != (c = fgetc(shm_f))) {
+      id_str[i++] = c;
     }
+    id_str[i] = 0;
+    shm_id = atoi(id_str);
+    afl_area_ptr = shmat(shm_id, NULL, 0);
 
-    fprintf(stderr, "ERROR: RESTORED CHILD DID NOT SEE FS_EXISTS.\n");
-    exit(0);
+    close(fd);
+    setsid();
+
+    /* Tell the parent our PID. We re-read because the
+     dump recorded the pid of the original "checkpoint"
+      process. */
+    pid_t ppid;
+    sprintf(tmp, "./syncdir/%s/parent_pid", afl_fuzzer_name);
+    FILE *pid_file = fopen(tmp, "r");
+    fread(&ppid, sizeof(pid_t), 1, pid_file);
+    fclose(pid_file);
+
+    sprintf(tmp, "/proc/%d/fd/%d", ppid, FORKSRV_FD + 2);
+    int comm_channel = open(tmp, O_WRONLY);
+    int my_pid = getpid();
+    if (write(comm_channel, &my_pid, 4) != 4) {
+      fprintf(stderr, "CHILD FAILED TO WRITE PID! %s\n", strerror(errno));
+      exit(5);
+    }
+    close(comm_channel);
+
+    fprintf(stderr, "CHILD DONE INITIALIZING\n");
+
+    return 0;
   }
 }
 
 void kill_children(void);
 
-/* Fork server logic, invoked once we hit _start. */
+/* Sends a SIGUSR2 to the AFL process, used for telling the
+   parent we are alive and to start the execution timer */
+void sigusr2_afl(void) {
+  /* Get file */
+  char tmp[1024] = {0};
+  sprintf(tmp, "./syncdir/%s/afl_parent_pid", afl_fuzzer_name);
+  FILE *pid_file = fopen(tmp, "r");
+  pid_t afl_parent_pid;
 
+  /* Read in PID value */
+  int i = 0;
+  while (fread(tmp + i, sizeof(char), 1, pid_file) == 1) {
+    i++;
+  }
+  tmp[i] = 0;
+  fclose(pid_file);
+
+  kill(atoi(tmp), SIGUSR2);
+}
+
+/* Fork server logic, invoked once we hit _start. */
 void afl_forkserver(CPUState *cpu) {
 #ifndef VALIDATING_AFL
   static unsigned char tmp[4];
@@ -376,12 +415,8 @@ void afl_forkserver(CPUState *cpu) {
   if (!afl_area_ptr)
     return;
 
-  pid_t parent_pid;
-  FILE *pid_f = fopen("/tmp/afl_parent_pid", "r");
-  fread(&parent_pid, sizeof(pid_t), 1, pid_f);
-  fclose(pid_f);
-
-  kill(parent_pid, SIGUSR2);
+  /* Tell AFL that we are alive */
+  sigusr2_afl();
 
   /* Tell the parent that we're alive. If the parent doesn't want
      to talk, assume that we're not running in forkserver mode. */
@@ -433,20 +468,10 @@ void afl_forkserver(CPUState *cpu) {
     close(TSL_FD);
 
     /* NOTE: Sends SIGSTOP to child, handled in fuzz_read.h */
-    if (ptrace(PTRACE_ATTACH, child_pid, NULL, NULL) < 0) {
-      fprintf(stderr, "PTRACE ATTACH ERROR. %s", strerror(errno));
+    if (ptrace(PTRACE_SEIZE, child_pid, NULL, NULL) < 0) {
+      fprintf(stderr, "PTRACE SEIZE ERROR. %s", strerror(errno));
       exit(5);
     }
-
-    if (waitpid(child_pid, &status, __WALL) < 0) {
-      fprintf(stderr, "FAILED TO WAIT FOR PROC CONT! %s\n", strerror(errno));
-    }
-
-    if (ptrace(PTRACE_CONT, child_pid, 0, 0) < 0) {
-      fprintf(stderr, "FAILED TO CONT PROC! %s\n", strerror(errno));
-    }
-
-    kill(child_pid, SIGUSR2);
 
     fprintf(stderr, "WRITING CHILDID TO AFL %d\n", child_pid);
     if (write(FORKSRV_FD + 1, &child_pid, 4) != 4) {
@@ -494,57 +519,81 @@ void afl_forkserver(CPUState *cpu) {
   }
 #endif
 }
-/* The equivalent of the tuple logging routine from afl-as.h. */
 
-int entry_mux = 0; /* Mux for signaling when to tell the fork server
-                      we are actively executing */
-ulong entry_pc = -1;
-extern int output_redirected;
+/*
+  The equivalent of the tuple logging routine from afl-as.h.
+*/
+
+/* Whether stdin, stdout have been set properly, final flag that
+ fuzzing has started. */
+int output_redirected = 0;
+void afl_fuzz_read(uint8_t *dest, int num_bytes) {
+#ifndef VALIDATING_AFL
+  if (afl_setup_done) {
+
+    /* NOTE: Maybe should wait for PTRACE_SEIZE here, technically,
+      but I guess it is fine to hope and not worry if we die before
+    the parent gets to us. */
+
+    if (!output_redirected) {
+      char tmp[1024];
+      fclose(stdin);
+      sprintf(tmp, "./syncdir/%s/.cur_input", afl_fuzzer_name);
+      stdin = fopen(tmp, "r");
+      fclose(stderr);
+      sprintf(tmp, "./syncdir/%s/stderr", afl_fuzzer_name);
+      stderr = fopen(tmp, "a+");
+      fclose(stdout);
+      sprintf(tmp, "./syncdir/%s/stdout", afl_fuzzer_name);
+      stdout = fopen(tmp, "a+");
+      output_redirected = 1;
+    }
+#else
+  if (!output_redirected) {
+    fclose(stdin);
+    stdin = fopen("./stdin", "r");
+    output_redirected = 1;
+  }
+#endif
+    uint8_t res[num_bytes];
+    int cnt = fread(res, 1, num_bytes, stdin);
+    for (int i = 0; i < num_bytes; i++) {
+      if (cnt != 0) {
+        *dest = res[i];
+        dest++;
+        cnt--;
+      }
+    }
+#ifndef VALIDATING_AFL
+  }
+#endif
+}
+
 inline void afl_maybe_log(ulong cur_loc) {
 #ifndef VALIDATING_AFL
   static __thread ulong prev_loc;
 
-  /* If we have already done a fuzzed read */
-  if (output_redirected) {
-    /* Hit AFL setup, but haven't recorded pc */
-    if (!entry_mux) {
-      entry_mux = 1;
-      entry_pc = cur_loc;
-      /* Recorded pc, and then started executing a different block */
-    } else if (entry_mux == 1 && cur_loc != entry_pc) {
-      entry_mux = 2;
+  /* Optimize for cur_loc > afl_end_code, which is the most likely case on
+      Linux systems. */
+  if (cur_loc > afl_end_code || cur_loc < afl_start_code || !afl_area_ptr)
+    return;
 
-      /* Notify afl-fuzz (not the forkserver!) that we are started */
-      FILE *pid_f = fopen("/tmp/afl_parent_pid", "r");
-      pid_t parent_pid;
-      fread(&parent_pid, sizeof(pid_t), 1, pid_f);
-      fclose(pid_f);
-      fprintf(stderr, "SENDING SIGNAL TO START TIMER.\n");
-      kill(parent_pid, SIGUSR2); // tell afl to start
-      fflush(stderr);
-    } else if (entry_mux == 2) {
-      /* Optimize for cur_loc > afl_end_code, which is the most likely case on
-         Linux systems. */
-      if (cur_loc > afl_end_code || cur_loc < afl_start_code || !afl_area_ptr)
-        return;
+  /* Looks like QEMU always maps to fixed locations, so ASAN is not a
+      concern. Phew. But instruction addresses may be aligned. Let's mangle
+      the value to get something quasi-uniform. */
 
-      /* Looks like QEMU always maps to fixed locations, so ASAN is not a
-         concern. Phew. But instruction addresses may be aligned. Let's mangle
-         the value to get something quasi-uniform. */
+  cur_loc = (cur_loc >> 4) ^ (cur_loc << 8);
+  cur_loc &= MAP_SIZE - 1;
 
-      cur_loc = (cur_loc >> 4) ^ (cur_loc << 8);
-      cur_loc &= MAP_SIZE - 1;
+  /* Implement probabilistic instrumentation by looking at scrambled block
+      address. This keeps the instrumented locations stable across runs. */
 
-      /* Implement probabilistic instrumentation by looking at scrambled block
-         address. This keeps the instrumented locations stable across runs. */
+  if (cur_loc >= afl_inst_rms)
+    return;
 
-      if (cur_loc >= afl_inst_rms)
-        return;
-
-      afl_area_ptr[cur_loc ^ prev_loc]++;
-      prev_loc = cur_loc >> 1;
-    }
-  }
-
+  afl_area_ptr[cur_loc ^ prev_loc]++;
+  prev_loc = cur_loc >> 1;
 #endif
 }
+
+int afl_setup_isdone(void) { return afl_setup_done; }

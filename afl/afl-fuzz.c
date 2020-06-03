@@ -2424,9 +2424,6 @@ static u8 run_target(char** argv, u32 timeout) {
   sigwait(&sigset, &sig);
   fprintf(stderr, "GOT SIGNAL TO START CHILD!\n");
 
-  /* Account for small delay in signal propagation */
-  usleep(10000);
-
   number_fuzzed++;
 
   /* Configure timeout, as requested by user, then wait for child to terminate. */
@@ -7830,11 +7827,6 @@ int main(int argc, char** argv) {
 
   gettimeofday(&tv, &tz);
   srandom(tv.tv_sec ^ tv.tv_usec ^ getpid());
-
-  pid_t pid = getpid();
-  FILE * pid_f = fopen("/tmp/afl_parent_pid", "w");
-  fwrite(&pid, sizeof(pid_t), 1, pid_f);
-  fclose(pid_f);
 
   while ((opt = getopt(argc, argv, "+i:o:f:m:t:T:dnCB:S:M:x:Qc:")) > 0)
 

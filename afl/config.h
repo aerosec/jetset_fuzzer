@@ -48,11 +48,11 @@
 /* Default timeout for fuzzed code (milliseconds). This is the upper bound,
    also used for detecting hangs; the actual value is auto-scaled: */
 
-#define EXEC_TIMEOUT        1000
+#define EXEC_TIMEOUT        60
 
 /* Timeout rounding factor when auto-scaling (milliseconds): */
 
-#define EXEC_TM_ROUND       20
+#define EXEC_TM_ROUND       1
 
 /* Default memory limit for child process (MB): */
 
