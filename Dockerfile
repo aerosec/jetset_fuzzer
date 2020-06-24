@@ -2,12 +2,13 @@ FROM ubuntu
 RUN apt update
 
 # Install dependencies for compiling QEMU, AFL, and CRIU API
+ENV DEBIAN_FRONTEND noninteractive 
 RUN apt install -y libprotobuf-c1 libpixman-1-dev libpng-dev libsnappy-dev \
   libfdt-dev libglib2.0-0 software-properties-common libnuma-dev \
   build-essential python pkg-config libglib2.0-dev zlib1g-dev git \
   libprotobuf-dev libprotobuf-c-dev protobuf-c-compiler protobuf-compiler \
   python-protobuf libnl-3-dev libcap-dev python3-future libbsd-dev python-yaml \
-  libaio-dev
+  libaio-dev libnet-dev
 
 # Install CRIU Server
 RUN apt-add-repository ppa:criu/ppa && apt update && apt install -y criu
