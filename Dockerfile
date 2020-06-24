@@ -20,7 +20,7 @@ WORKDIR /usr/src/app
 # Configure QEMU. NOTE: Change this line if you want to fuzz a different system type
 RUN ./configure --target-list=i386-softmmu --disable-werror
 # Compile QEMU and fuzzer
-RUN cd criu && make clean && make && cd .. && \
+RUN make clean && cd criu && make && cd .. && \
   make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS -O3 \
   $PWD/criu/lib/c/built-in.o -L/usr/lib/x86_64-linux-gnu/ -lprotobuf-c \
   -Wno-error"
