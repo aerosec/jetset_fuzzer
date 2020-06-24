@@ -43,6 +43,8 @@ If this works, everything is in proper order!
 Now, cd into the directory above this one, and use the Dockerfile to set up the container:
 
 ```
+# Edit the a few commands noted in the file to compile the QEMU target you want
+vim Dockerfile
 sudo docker build -t bland_fuzz .
 ```
 
@@ -64,7 +66,8 @@ Inside the docker container, a private `/proc` is used, so automatic inference o
 the cpu to pin to will fail; thus, a core must be specified explicitly or each container
 will pin to CPU 0. This script pins to CPU 2.
 
-See `../scripts/afl-fuzz-ex.sh` for an example of spinning up multiple containers.
+See `../scripts/afl-fuzz-ex.sh` for an example of spinning up multiple containers and 
+other goodies.
 
 ### Cleaning up
 
@@ -100,6 +103,12 @@ tmpfs root to run the script at.
 Important: the first run, if the data is not copied, will copy the setup data to the tmpfs directory. 
 You should make sure this step completes before starting docker containers, because otherwise there
 will be race conditions in overwriting the files in this directory.
+
+That is, run the `runall.sh` script with `-f` outside of docker at least once, then remove 
+`syncdir` from your tmpfs mount. The best way to do this is to run the `afl-fuzz-one.sh`
+script.
+
+TODO: Automate this.
 
 You may need to add some additional directory `cp` commands to the runall script, for the testcase input 
 directory for AFL.
