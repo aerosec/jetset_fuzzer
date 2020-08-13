@@ -3,6 +3,8 @@ RUN apt update
 
 # Install dependencies for compiling QEMU, AFL, and CRIU API
 ENV DEBIAN_FRONTEND noninteractive 
+RUN apt build-dep -y qemu
+RUN apt build-dep -y criu
 RUN apt install -y libprotobuf-c1 libpixman-1-dev libpng-dev libsnappy-dev \
   libfdt-dev libglib2.0-0 software-properties-common libnuma-dev \
   build-essential python pkg-config libglib2.0-dev zlib1g-dev git \
