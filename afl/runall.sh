@@ -111,19 +111,21 @@ if [ "$QEMU_TRACE_SCR" != '' ]; then
     cp $QEMU_TRACE_SCR afl-qemu-trace
 fi
 
-if [ "$TMPFS_PATH" != '' ]; then
-    echo "SETTING UP TMPFS"
-    if [ ! -f $TMPFS_PATH/afl-fuzz ]; then
-      cp afl-fuzz run-afl.sh afl-qemu afl-qemu-trace $TMPFS_PATH/
-      cp -r testcases $TMPFS_PATH/
-      cp -r data $TMPFS_PATH/
-    fi
-    cd $TMPFS_PATH
-fi
+makedata () {
+  if [ "$TMPFS_PATH" != '' ]; then
+      echo "SETTING UP TMPFS"
+      if [ ! -f $TMPFS_PATH/afl-fuzz ]; then
+        cp afl-fuzz run-afl.sh afl-qemu afl-qemu-trace $TMPFS_PATH/
+        cp -r ./testcases $TMPFS_PATH/
+        cp -r ./data $TMPFS_PATH/
+      fi
+      cd $TMPFS_PATH
+  fi
 
-echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
-mkdir -p syncdir/$FUZZ_NAME > /dev/null 2>&1
-cp -r data syncdir/$FUZZ_NAME/
+  echo "MAKING DIRECTORIES FOR $FUZZ_NAME"
+  mkdir -p syncdir/$FUZZ_NAME > /dev/null 2>&1
+  cp -r ./data ./syncdir/$FUZZ_NAME/
+}
 
 # We do this weird bash mumbojumbo below so that we can write
 # the afl fuzzer's own pid to a file for use by subprocesses
@@ -133,6 +135,8 @@ cp -r data syncdir/$FUZZ_NAME/
 # us to use the coproc keyword so we can wait on the shell.
 
 # Run twice; once to set up state, once to start fuzzing
+makedata
 bash -c "./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN"
 sleep 0.2
+makedata
 bash -c "./run-afl.sh -$FUZZ_TYPE $FUZZ_NAME $CPU_PIN"
