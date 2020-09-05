@@ -29,8 +29,10 @@ static unsigned char *afl_area_ptr;
 
 /* Sets up afl */
 inline void afl_setup_snippet(CPUState *cpu) {
-#ifndef VALIDATING_AFL
   if (!afl_setup_done) {
+    afl_setup_done = 1;
+
+#ifndef VALIDATING_AFL
     /* Account for time dialation */
     set_criu_dump_time();
 
@@ -49,8 +51,8 @@ inline void afl_setup_snippet(CPUState *cpu) {
     /* We do this as close to the point where execution resumes as possible, in
        order to give the illusion that nothing at all happened */
     set_criu_restore_time();
-  }
 #endif
+  }
 }
 
 void kill_children(void) {
@@ -120,8 +122,6 @@ void afl_setup(void) {
      behaviour, and seems to work alright? */
   rcu_disable_atfork();
 #endif
-
-  afl_setup_done = 1;
 }
 
 /**
