@@ -1,4 +1,4 @@
-# BlandFuzz: Everything is the same.
+# AFL portion of Jetset Fuzzer. 
 
 Reinstrumented version of afl that allows arbitrary fuzzing of anything, anywhere
 

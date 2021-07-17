@@ -1,6 +1,17 @@
-# aerosec-afl
+# Jetset Fuzzer
 
 Repository for setting up an architecture independent fuzzer based on AFL in an instance of the QEmu codebase.
+
+*NOTE* this should be a working version, though I made some minor changes in a seperate private repository.
+If anything doesn't work just send M.T. Bland an email at `mb28@illinois.edu`.
+
+*NOTE* some of the documentation below is a little out of date, but the structure is generally correct. 
+It is advised to use the docker file (since multiple fuzzer instances need to have namespace seperation, 
+etc).
+
+*NOTE* designed for the jetset qemu version. Not guaranteed to work on the mainline version of qemu,
+but if anyone is interested in improving it just send me an email (I have some choice words about 
+how it should be rewritten).
 
 ## Setup
 
