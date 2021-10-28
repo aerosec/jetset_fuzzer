@@ -1,3 +1,8 @@
+# ACHTUNG! 
+
+There is also a one hour tutorial video for how to set up the fuzzer and run it. Email me at
+`mb28@illinois.edu` and I will send you a link.
+
 # Jetset Fuzzer
 
 Repository for setting up an architecture independent fuzzer based on AFL in an instance of the QEmu codebase.
