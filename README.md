@@ -1,7 +1,8 @@
 # ACHTUNG! 
 
-There is also a one hour tutorial video for how to set up the fuzzer and run it. Email me at
-`mb28@illinois.edu` and I will send you a link.
+There is also a one hour tutorial video for how to set up the fuzzer and run it [here](https://youtu.be/mJYM7Z_c8e0).
+You can also open an issue here or on the main Jetset repository.
+
 
 # Jetset Fuzzer
 
