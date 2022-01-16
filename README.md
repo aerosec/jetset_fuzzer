@@ -1,12 +1,11 @@
-# Achtung
+# Achtung!!!
 
 This fuzzer has been majorly refactored and modified in order to work with the current mainline version
 of QEMU (as of 1/16/2022). You can find the code, which is documented, much smaller, and more bug-free
 at [the Y-AFL repository](https://github.com/maxwell-bland/trYforce-firm-AFL).
 
-#@ Achtung
-
-There is also a one hour tutorial video for how to set up the fuzzer and run it [here](https://youtu.be/mJYM7Z_c8e0).
+There is also a one hour tutorial video for how to set up the jetset fuzzer (not version 2) and run it 
+[here](https://youtu.be/mJYM7Z_c8e0).
 You can also open an issue here or on the main Jetset repository.
 
 
