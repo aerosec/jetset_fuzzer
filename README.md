@@ -140,6 +140,13 @@ make LD_LIBRARY_PATH=./criu/lib/c/ CFLAGS="$CFLAGS $PWD/criu/lib/c/built-in.o \
 
 ## Compiling for fuzzing
 
+You may need to substitute the following constants in the `criu` directory if you are using a newer linux kernel version
+```
+./include/uapi/linux/mount.h:   FSCONFIG_SET_STRING     = 1,    /* Set parameter, supplying a string value */
+./include/uapi/linux/mount.h:   FSCONFIG_SET_FLAG       = 0,    /* Set parameter, supplying no value */
+./include/uapi/linux/mount.h:   FSCONFIG_CMD_CREATE     = 6,    /* Invoke superblock creation */
+```
+
 Once this is set up, read the readme under `/afl` to start the fuzzing. 
 
 ## Optional Patches 
