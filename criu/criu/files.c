@@ -195,6 +195,7 @@ int set_fds_event(pid_t virt)
 		futex_wake(&item->task_st);
 	return 0;
 }
+extern struct pstree_item *current;
 
 void clear_fds_event(void)
 {

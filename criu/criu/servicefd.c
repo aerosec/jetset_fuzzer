@@ -142,6 +142,7 @@ int service_fd_min_fd(struct pstree_item *item)
 	return service_fd_rlim_cur - (SERVICE_FD_MAX - 1) - SERVICE_FD_MAX * id;
 }
 
+extern struct pstree_item *current;
 static void sfds_protection_bug(enum sfd_type type)
 {
 	pr_err("Service fd %s is being modified in protected context\n",

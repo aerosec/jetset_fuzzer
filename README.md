@@ -8,6 +8,15 @@ There is also a one hour tutorial video for how to set up the jetset fuzzer (not
 [here](https://youtu.be/mJYM7Z_c8e0).
 You can also open an issue here or on the main Jetset repository.
 
+# Achtungx2!!!
+
+Updated build instructions for CRIU:
+
+```
+cd criu
+make clean
+CFLAGS='-Wno-error=deprecated-declarations -Wno-error=stringop-truncation' make -j8
+```
 
 # Jetset Fuzzer
 

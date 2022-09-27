@@ -1166,6 +1166,7 @@ static int open_ext_tty(struct tty_info *info)
 
 	return fd;
 }
+extern struct pstree_item *current;
 
 static bool tty_deps_restored(struct tty_info *info)
 {

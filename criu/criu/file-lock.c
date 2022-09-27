@@ -544,6 +544,7 @@ static struct fdinfo_list_entry *find_fd_unordered(struct pstree_item *task,
 	}
 	return NULL;
 }
+extern struct pstree_item *current;
 
 static int restore_breaking_file_lease(FileLockEntry *fle)
 {

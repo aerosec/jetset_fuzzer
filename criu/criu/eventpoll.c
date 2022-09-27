@@ -385,6 +385,7 @@ err_close:
 	close(tmp);
 	return -1;
 }
+extern struct pstree_item *current;
 
 static int epoll_not_ready_tfd(EventpollTfdEntry *tdefe)
 {

@@ -163,6 +163,8 @@ static char ** parse_config(char *filepath)
 	return configuration;
 }
 
+char * rpc_cfg_file;
+
 static int next_config(char **argv, char ***_argv, bool no_default_config,
 		int state, char *cfg_file)
 {
