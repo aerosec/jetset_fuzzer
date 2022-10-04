@@ -18,6 +18,10 @@ make clean
 CFLAGS='-Wno-error=deprecated-declarations -Wno-error=stringop-truncation' make -j8
 ```
 
+# Achtungx3!!!
+
+Works on Ubuntu 18.04!
+
 # Jetset Fuzzer
 
 Repository for setting up an architecture independent fuzzer based on AFL in an instance of the QEmu codebase.
